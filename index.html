@@ -27,13 +27,12 @@
             flex-direction: column;
         }
 
-        /* Maximized Viewport */
         .viewport {
-            flex: 1; /* Takes all available space */
+            flex: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 10px;
+            padding: 15px;
             position: relative;
             background: radial-gradient(circle at center, #111 0%, #000 100%);
         }
@@ -49,13 +48,12 @@
         canvas {
             max-width: 100%;
             max-height: 100%;
-            box-shadow: 0 40px 100px rgba(0,0,0,0.9);
+            box-shadow: 0 40px 120px rgba(0,0,0,1);
             background: #fff;
             touch-action: none;
             image-rendering: -webkit-optimize-contrast;
         }
 
-        /* Compact Controls */
         .controls {
             flex-shrink: 0;
             background: var(--panel);
@@ -93,7 +91,7 @@
         }
 
         .settings-pane {
-            height: 160px; /* Fixed compact height */
+            height: 160px;
             overflow-y: auto;
             padding: 12px 20px;
         }
@@ -115,10 +113,11 @@
         .preset-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
         .preset-btn {
             background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);
-            padding: 12px 2px; border-radius: 6px; text-align: center;
+            padding: 10px 2px; border-radius: 6px; text-align: center;
+            transition: all 0.2s;
         }
         .preset-btn.active { background: #3b82f6; border-color: #3b82f6; color: #fff; }
-        .preset-btn span { font-size: 8px; font-weight: 800; text-transform: uppercase; }
+        .preset-btn span { font-size: 8px; font-weight: 800; text-transform: uppercase; display: block;}
 
         .action-bar {
             padding: 10px 20px;
@@ -135,7 +134,6 @@
         .marker-font { font-family: 'Permanent Marker', cursive; }
         .hidden { display: none !important; }
 
-        /* Scrollbar */
         .settings-pane::-webkit-scrollbar { width: 3px; }
         .settings-pane::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
     </style>
@@ -160,24 +158,34 @@
                 </div>
             </div>
         </div>
-
-        <button onclick="showPreview()" id="inspectBtn" class="absolute top-4 right-4 w-12 h-12 bg-black/50 backdrop-blur-xl border border-white/10 rounded-full flex items-center justify-center hidden">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
-        </button>
     </div>
 
     <div class="controls" id="controlPanel">
         <div class="tab-bar">
-            <button class="tab-btn active" onclick="switchTab('optics', this)">Optics</button>
+            <button class="tab-btn active" onclick="switchTab('format', this)">Format</button>
+            <button class="tab-btn" onclick="switchTab('optics', this)">Optics</button>
             <button class="tab-btn" onclick="switchTab('presets', this)">Presets</button>
-            <button class="tab-btn" onclick="switchTab('chem', this)">Chemicals</button>
-            <button class="tab-btn" onclick="switchTab('style', this)">Style</button>
+            <button class="tab-btn" onclick="switchTab('chem', this)">Film</button>
+            <button class="tab-btn" onclick="switchTab('style', this)">Text</button>
         </div>
 
-        <div class="settings-pane" id="opticsPane">
+        <div class="settings-pane" id="formatPane">
+            <div class="preset-grid">
+                <button class="preset-btn active" onclick="setFormat('p600', this)"><span>600</span></button>
+                <button class="preset-btn" onclick="setFormat('sx70', this)"><span>SX-70</span></button>
+                <button class="preset-btn" onclick="setFormat('spectra', this)"><span>Spectra</span></button>
+                <button class="preset-btn" onclick="setFormat('go', this)"><span>Go</span></button>
+                <button class="preset-btn" onclick="setFormat('i-type', this)"><span>i-Type</span></button>
+                <button class="preset-btn" onclick="setFormat('peel', this)"><span>Pack</span></button>
+                <button class="preset-btn" onclick="setFormat('neg35', this)"><span>35mm Neg</span></button>
+                <button class="preset-btn" onclick="setFormat('none', this)"><span>Raw</span></button>
+            </div>
+        </div>
+
+        <div class="settings-pane hidden" id="opticsPane">
             <div class="control-group">
                 <div class="control-label"><span>Zoom</span><span class="control-val" id="zoomVal">1.0x</span></div>
-                <input type="range" id="zoom" min="0.5" max="3.0" step="0.01" value="1.0">
+                <input type="range" id="zoom" min="0.5" max="4.0" step="0.01" value="1.0">
             </div>
             <div class="control-group">
                 <div class="control-label"><span>Rotation</span><span class="control-val" id="rotVal">0°</span></div>
@@ -210,7 +218,7 @@
         </div>
 
         <div class="settings-pane hidden" id="stylePane">
-            <input type="text" id="markerText" placeholder="Marker text..." 
+            <input type="text" id="markerText" placeholder="Write on border..." 
                 class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 mb-4 text-white marker-font outline-none text-xl text-center">
             <div class="grid grid-cols-2 gap-4">
                 <div class="control-group">
@@ -229,22 +237,40 @@
         </div>
     </div>
 
-    <div id="previewOverlay" class="fixed inset-0 bg-black/98 z-[1000] hidden flex-col items-center justify-center p-4" onclick="hidePreview()">
-        <img id="previewImg" class="max-w-full max-h-[90vh] shadow-2xl" src="" alt="Final">
-        <p class="mt-4 text-white/30 text-[10px] font-bold uppercase tracking-widest">Tap to resume editing</p>
-    </div>
-
 <script>
     const canvas = document.getElementById('mainCanvas');
     const ctx = canvas.getContext('2d', { alpha: false });
-    const BASE_S = 2400, MARGIN = 160, FOOTER = 600;
-    const TOTAL_W = BASE_S + (MARGIN * 2), TOTAL_H = BASE_S + MARGIN + FOOTER;
+    
+    // Format Definitions
+    const FORMATS = {
+        'p600': { w: 3100, h: 3800, margin: 160, footer: 650, borderRadius: 0 },
+        'sx70': { w: 3100, h: 3800, margin: 160, footer: 650, bg: '#fdfdf9' },
+        'spectra': { w: 4000, h: 3500, margin: 200, footer: 600 },
+        'go': { w: 2400, h: 3000, margin: 120, footer: 500 },
+        'i-type': { w: 3100, h: 3800, margin: 160, footer: 650 },
+        'peel': { w: 4200, h: 3200, margin: 300, footer: 300, bleed: true },
+        'neg35': { w: 3600, h: 2400, margin: 400, footer: 0, isNegative: true },
+        'none': { w: 2400, h: 2400, margin: 0, footer: 0 }
+    };
+
+    let state = { 
+        img: null, x: 0, y: 0, lastX: 0, lastY: 0, 
+        isDragging: false, currentPreset: 'none', currentFormat: 'p600' 
+    };
+
+    const ui = {};
+    const controls = ['zoom', 'rotation', 'exposure', 'grain', 'gloss', 'vignette', 'markerText'];
+    
+    controls.forEach(id => {
+        ui[id] = document.getElementById(id);
+        ui[id].oninput = () => { updateLabels(); draw(false); };
+    });
 
     const buffer = document.createElement('canvas');
     const bCtx = buffer.getContext('2d');
-    
     const noiseBuffer = document.createElement('canvas');
     const nCtx = noiseBuffer.getContext('2d');
+
     function updateNoise() {
         noiseBuffer.width = 512; noiseBuffer.height = 512;
         const idata = nCtx.createImageData(512, 512);
@@ -255,15 +281,6 @@
         nCtx.putImageData(idata, 0, 0);
     }
     updateNoise();
-
-    let state = { img: null, x: 0, y: 0, lastX: 0, lastY: 0, isDragging: false, currentPreset: 'none' };
-    const ui = {};
-    const controls = ['zoom', 'rotation', 'exposure', 'grain', 'gloss', 'vignette', 'markerText'];
-    
-    controls.forEach(id => {
-        ui[id] = document.getElementById(id);
-        ui[id].oninput = () => { updateLabels(); draw(false); };
-    });
 
     function updateLabels() {
         document.getElementById('zoomVal').innerText = parseFloat(ui.zoom.value).toFixed(1) + 'x';
@@ -283,7 +300,14 @@
 
     function setPreset(pId, btn) {
         state.currentPreset = pId;
-        document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('#presetsPane .preset-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        draw(false);
+    }
+
+    function setFormat(fId, btn) {
+        state.currentFormat = fId;
+        document.querySelectorAll('#formatPane .preset-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         draw(false);
     }
@@ -299,7 +323,6 @@
                 state.x = 0; state.y = 0;
                 document.getElementById('emptyState').classList.add('hidden');
                 document.getElementById('mainCanvas').classList.remove('hidden');
-                document.getElementById('inspectBtn').classList.remove('hidden');
                 draw(true);
             };
             img.src = v.target.result;
@@ -338,33 +361,83 @@
         context.putImageData(idata, 0, 0);
     }
 
+    function drawNegDetails(s, w, h, m) {
+        ctx.fillStyle = "#111";
+        ctx.fillRect(0, 0, w, h);
+        
+        ctx.fillStyle = "#000";
+        // Sprocket Holes
+        const holeW = 120 * s, holeH = 180 * s;
+        for(let i=0; i<w; i += 300 * s) {
+            ctx.fillRect(i + 50*s, 50 * s, holeW, holeH);
+            ctx.fillRect(i + 50*s, h - holeH - 50*s, holeW, holeH);
+        }
+
+        // Text markings
+        ctx.font = `${80 * s}px 'JetBrains Mono'`;
+        ctx.fillStyle = "rgba(255, 120, 0, 0.6)"; // Amber kodak color
+        ctx.fillText("KODAK PORTRA 400", 400 * s, h - 280 * s);
+        ctx.fillText("24A", w - 600 * s, h - 280 * s);
+        ctx.fillText("▶ 25", w/2, 280 * s);
+    }
+
     function draw(highRes = false) {
         if(!state.img) return;
-        const currentW = document.getElementById('canvasContainer').clientWidth;
-        const s = highRes ? 1 : (currentW / TOTAL_W);
-        canvas.width = TOTAL_W * s; canvas.height = TOTAL_H * s;
-        
-        ctx.fillStyle = "#ffffff"; 
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        const fmt = FORMATS[state.currentFormat];
+        const containerW = document.getElementById('canvasContainer').clientWidth;
+        const containerH = document.getElementById('canvasContainer').clientHeight;
 
-        const m = MARGIN * s, b = BASE_S * s, z = parseFloat(ui.zoom.value);
+        const scaleX = containerW / fmt.w;
+        const scaleY = containerH / fmt.h;
+        const s = highRes ? 1 : Math.min(scaleX, scaleY);
+        
+        canvas.width = fmt.w * s;
+        canvas.height = fmt.h * s;
+
+        const m = fmt.margin * s;
+        const footerH = fmt.footer * s;
+        const photoW = canvas.width - (m * 2);
+        const photoH = canvas.height - (m * 2) - footerH;
+
+        // Background
+        if(fmt.isNegative) {
+            drawNegDetails(s, canvas.width, canvas.height, m);
+        } else {
+            ctx.fillStyle = fmt.bg || "#ffffff";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // Buffer Drawing
+        buffer.width = photoW / s;
+        buffer.height = photoH / s;
+        const bW = buffer.width, bH = buffer.height;
+        
+        const z = parseFloat(ui.zoom.value);
         const r = parseInt(ui.rotation.value) * Math.PI / 180;
         const aspect = state.img.width / state.img.height;
-        let dw = aspect > 1 ? (b * z * aspect) : (b * z), dh = aspect > 1 ? (b * z) : (b * z / aspect);
+        const pAspect = bW / bH;
 
-        buffer.width = b; buffer.height = b;
-        bCtx.fillStyle = "#111"; bCtx.fillRect(0, 0, b, b);
+        let dw, dh;
+        if (aspect > pAspect) {
+            dh = bH * z; dw = dh * aspect;
+        } else {
+            dw = bW * z; dh = dw / aspect;
+        }
+
+        bCtx.fillStyle = "#111";
+        bCtx.fillRect(0, 0, bW, bH);
         bCtx.save();
-        bCtx.translate(b/2 + state.x * s, b/2 + state.y * s);
+        bCtx.translate(bW/2 + state.x * s, bH/2 + state.y * s);
         bCtx.rotate(r);
         bCtx.drawImage(state.img, -dw/2, -dh/2, dw, dh);
         bCtx.restore();
-        applyFilmEngine(bCtx, b, b);
+        applyFilmEngine(bCtx, bW, bH);
 
+        // Render Photo to Main
         ctx.save();
-        ctx.beginPath(); ctx.rect(m, m, b, b); ctx.clip();
-        ctx.drawImage(buffer, m, m);
+        ctx.drawImage(buffer, m, m, photoW, photoH);
 
+        // Overlays
         const gVal = parseInt(ui.grain.value);
         if(gVal > 0) {
             ctx.save();
@@ -372,40 +445,42 @@
             ctx.globalAlpha = gVal / 255;
             const ptrn = ctx.createPattern(noiseBuffer, 'repeat');
             ctx.fillStyle = ptrn;
-            ctx.fillRect(m, m, b, b);
+            ctx.translate(m, m);
+            ctx.fillRect(0, 0, photoW, photoH);
             ctx.restore();
         }
 
         const vVal = parseInt(ui.vignette.value);
         if(vVal > 0) {
-            const grad = ctx.createRadialGradient(m+b/2, m+b/2, b*0.3, m+b/2, m+b/2, b*0.8);
+            const grad = ctx.createRadialGradient(m+photoW/2, m+photoH/2, photoW*0.3, m+photoW/2, m+photoH/2, photoW*0.8);
             grad.addColorStop(0, 'rgba(0,0,0,0)');
             grad.addColorStop(1, `rgba(0,0,0,${vVal/100 * 0.8})`);
             ctx.fillStyle = grad;
-            ctx.fillRect(m, m, b, b);
+            ctx.fillRect(m, m, photoW, photoH);
         }
 
         const glossVal = parseInt(ui.gloss.value);
         if(glossVal > 0) {
             ctx.save();
             const alpha = (glossVal / 100);
-            const grad = ctx.createLinearGradient(m, m, m+b, m+b);
+            const grad = ctx.createLinearGradient(m, m, m+photoW, m+photoH);
             grad.addColorStop(0, `rgba(255,255,255,${0.2 * alpha})`);
             grad.addColorStop(0.5, `rgba(255,255,255,0)`);
             grad.addColorStop(1, `rgba(255,255,255,${0.1 * alpha})`);
             ctx.fillStyle = grad;
-            ctx.fillRect(m, m, b, b);
+            ctx.fillRect(m, m, photoW, photoH);
             ctx.restore();
         }
-        ctx.restore(); 
+        ctx.restore();
 
-        if(ui.markerText.value) {
+        // Footer Text
+        if(ui.markerText.value && footerH > 0) {
             ctx.font = `${140 * s}px 'Permanent Marker'`;
             ctx.fillStyle = "rgba(10,10,25,0.85)";
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
             ctx.save();
-            const footerCenterY = (TOTAL_H * s - FOOTER * s) + (FOOTER * s / 2) + (30 * s);
+            const footerCenterY = (canvas.height - footerH) + (footerH / 2) + (30 * s);
             ctx.translate(canvas.width/2, footerCenterY);
             ctx.rotate(-0.015);
             ctx.fillText(ui.markerText.value, 0, 0);
@@ -422,7 +497,8 @@
     const handleMove = (e) => {
         if(!state.isDragging || !state.img) return;
         const t = e.touches ? e.touches[0] : e;
-        const f = TOTAL_W / canvas.clientWidth;
+        const fmt = FORMATS[state.currentFormat];
+        const f = fmt.w / canvas.clientWidth;
         state.x += (t.clientX - state.lastX) * f;
         state.y += (t.clientY - state.lastY) * f;
         state.lastX = t.clientX; state.lastY = t.clientY;
@@ -436,22 +512,13 @@
     window.addEventListener('mouseup', () => state.isDragging = false);
     window.addEventListener('touchend', () => state.isDragging = false);
 
-    function showPreview() {
-        if(!state.img) return;
-        draw(true);
-        document.getElementById('previewImg').src = canvas.toDataURL('image/jpeg', 0.9);
-        document.getElementById('previewOverlay').classList.remove('hidden');
-    }
-    function hidePreview() { document.getElementById('previewOverlay').classList.add('hidden'); }
-
     document.getElementById('exportBtn').onclick = function() {
         if(!state.img) return;
         draw(true);
         const link = document.createElement('a');
-        link.href = canvas.toDataURL('image/jpeg', 0.95);
-        link.download = `polaroid_${Date.now()}.jpg`;
+        link.href = canvas.toDataURL('image/jpeg', 0.98);
+        link.download = `studio_${state.currentFormat}_${Date.now()}.jpg`;
         link.click();
-        showPreview();
     };
 
     window.onresize = () => draw(false);
