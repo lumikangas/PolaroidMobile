@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
     <title>Polaroid Studio 2026</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -11,9 +10,9 @@
 
         :root {
             --accent: #3b82f6;
-            --bg: #050505;
+            --bg: #000;
             --panel: rgba(15, 15, 18, 0.98);
-            --safe-bottom: env(safe-area-inset-bottom, 12px);
+            --safe-bottom: env(safe-area-inset-bottom, 24px);
         }
 
         body {
@@ -32,34 +31,56 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 15px;
+            padding: 10px;
+            background: #0a0a0a;
             position: relative;
-            background: radial-gradient(circle at center, #111 0%, #000 100%);
-        }
-
-        #canvasContainer {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            overflow: hidden;
         }
 
         canvas {
-            max-width: 100%;
-            max-height: 100%;
-            box-shadow: 0 40px 120px rgba(0,0,0,1);
+            max-width: 95%;
+            max-height: 95%;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.9);
             background: #fff;
             touch-action: none;
-            image-rendering: -webkit-optimize-contrast;
+            border-radius: 1px;
+        }
+
+        /* Polaroidin tyhjä tila */
+        .polaroid-placeholder {
+            width: 280px;
+            height: 340px;
+            background: #fff;
+            border-radius: 2px;
+            padding: 16px 16px 60px 16px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            animation: fadeIn 0.8s ease-out;
+        }
+        .photo-slot {
+            flex: 1;
+            background: #111;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 1px;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
         .controls {
             flex-shrink: 0;
+            height: 45dvh;
+            min-height: 400px;
             background: var(--panel);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-top: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border-top: 1px solid rgba(255,255,255,0.08);
+            border-top-left-radius: 24px;
+            border-top-right-radius: 24px;
             display: flex;
             flex-direction: column;
             padding-bottom: var(--safe-bottom);
@@ -68,209 +89,233 @@
 
         .tab-bar {
             display: flex;
-            padding: 8px 12px;
-            gap: 4px;
+            padding: 16px 20px 8px;
+            gap: 20px;
             justify-content: center;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
         }
 
         .tab-btn {
             font-size: 10px;
             font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #555;
-            padding: 6px 14px;
-            border-radius: 8px;
-            transition: all 0.2s;
+            letter-spacing: 1.5px;
+            color: #444;
+            position: relative;
+            padding: 8px 12px;
         }
 
-        .tab-btn.active { 
-            color: #fff; 
-            background: rgba(255,255,255,0.1);
+        .tab-btn.active { color: #fff; }
+        .tab-btn.active::after {
+            content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 20px; height: 3px; background: var(--accent); border-radius: 3px;
         }
 
         .settings-pane {
-            height: 160px;
+            flex: 1;
             overflow-y: auto;
-            padding: 12px 20px;
+            padding: 10px 24px;
+            -webkit-overflow-scrolling: touch;
         }
 
-        .control-group { margin-bottom: 8px; }
-        
+        .control-group { margin-bottom: 20px; }
         input[type=range] {
             -webkit-appearance: none;
-            width: 100%; height: 3px; border-radius: 10px; margin: 10px 0; background: #222;
-            cursor: pointer;
+            width: 100%; height: 12px; border-radius: 6px; margin: 14px 0; background: #1a1a1e;
         }
         input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none; width: 20px; height: 20px; background: #fff; border-radius: 50%; box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            -webkit-appearance: none; width: 34px; height: 34px; background: #fff; border-radius: 50%; border: 4px solid #000; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
 
-        .control-label { display: flex; justify-content: space-between; font-size: 9px; font-weight: 700; color: #777; text-transform: uppercase; }
-        .control-val { color: #fff; font-family: 'JetBrains Mono', monospace; }
-
-        .preset-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-        .preset-btn {
-            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);
-            padding: 10px 2px; border-radius: 6px; text-align: center;
+        #redChan { background: linear-gradient(to right, #330000, #ff0000); }
+        #greenChan { background: linear-gradient(to right, #003300, #00ff00); }
+        #blueChan { background: linear-gradient(to right, #000033, #0000ff); }
+        
+        .filter-btn {
+            flex: 1;
+            padding: 10px 4px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            font-size: 9px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: #666;
+            border: 1px solid transparent;
             transition: all 0.2s;
         }
-        .preset-btn.active { background: #3b82f6; border-color: #3b82f6; color: #fff; }
-        .preset-btn span { font-size: 8px; font-weight: 800; text-transform: uppercase; display: block;}
-
-        .action-bar {
-            padding: 10px 20px;
-            display: flex;
-            gap: 10px;
+        .filter-btn.active {
+            background: #fff;
+            color: #000;
         }
+
+        .control-label { display: flex; justify-content: space-between; font-size: 11px; font-weight: 800; color: #777; text-transform: uppercase; }
+        .control-val { color: #fff; font-family: 'JetBrains Mono', monospace; font-size: 10px;}
+
+        #previewOverlay {
+            position: fixed; inset: 0; background: #000; z-index: 1000;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            padding: 16px;
+        }
+        #previewImg { max-width: 100%; max-height: 82vh; border-radius: 2px; }
 
         .btn-main {
             background: #fff; color: #000; font-weight: 800; text-transform: uppercase; 
-            padding: 12px; border-radius: 10px; font-size: 11px; width: 100%;
-            transition: transform 0.1s;
+            padding: 18px; border-radius: 16px; font-size: 13px; width: 100%;
         }
-        
         .marker-font { font-family: 'Permanent Marker', cursive; }
-        .hidden { display: none !important; }
-
-        .settings-pane::-webkit-scrollbar { width: 3px; }
-        .settings-pane::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
+        
+        .divider { height: 1px; background: rgba(255,255,255,0.05); margin: 24px 0; }
     </style>
 </head>
 <body>
 
-    <div class="viewport">
-        <div id="canvasContainer">
-            <canvas id="mainCanvas" class="hidden"></canvas>
-            
-            <div id="emptyState" class="flex flex-col items-center">
-                <div class="w-[280px] h-[350px] bg-white rounded-sm p-5 pb-16 shadow-2xl flex flex-col scale-110">
-                    <div class="flex-1 bg-zinc-900 flex items-center justify-center rounded-sm overflow-hidden">
-                         <label class="cursor-pointer flex flex-col items-center w-full h-full justify-center">
-                            <div class="w-14 h-14 bg-white/10 rounded-full flex items-center justify-center mb-3">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
-                            </div>
-                            <span class="text-[10px] text-white/40 font-black tracking-widest uppercase">Start Project</span>
-                            <input type="file" id="imgInput" accept="image/*" class="hidden">
-                         </label>
+    <div class="viewport" id="viewport">
+        <canvas id="mainCanvas" class="hidden"></canvas>
+        
+        <div id="emptyState" class="flex flex-col items-center">
+            <div class="polaroid-placeholder">
+                <div class="photo-slot">
+                     <label class="cursor-pointer group flex flex-col items-center">
+                        <div class="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                        </div>
+                        <span class="text-[10px] text-white font-bold tracking-[0.2em] uppercase">Lataa kuva</span>
+                        <input type="file" id="imgInput" accept="image/*" class="hidden">
+                     </label>
+                </div>
+                <div class="mt-4 flex justify-between items-center px-1 opacity-20">
+                    <span class="text-[10px] font-black text-black">600 FILM</span>
+                    <div class="flex gap-1">
+                        <div class="w-2 h-2 rounded-full bg-red-500"></div>
+                        <div class="w-2 h-2 rounded-full bg-yellow-500"></div>
+                        <div class="w-2 h-2 rounded-full bg-blue-500"></div>
                     </div>
                 </div>
             </div>
+            <p class="mt-8 text-[9px] font-bold uppercase tracking-[0.5em] text-white/20">Polaroid Studio 26</p>
+        </div>
+
+        <button onclick="showPreview()" id="inspectBtn" class="absolute bottom-6 right-6 w-14 h-14 bg-white/10 backdrop-blur-xl border border-white/20 rounded-full flex items-center justify-center hidden active:scale-90 transition-transform">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+        </button>
+    </div>
+
+    <div class="controls">
+        <div class="tab-bar">
+            <button class="tab-btn active" onclick="switchTab('optics', this)">Optiikka</button>
+            <button class="tab-btn" onclick="switchTab('color', this)">Kemikaalit</button>
+            <button class="tab-btn" onclick="switchTab('finish', this)">Viimeistely</button>
+        </div>
+
+        <!-- OPTICS TAB: Zoom, Rotate + Lighting (Shadows/Highlights) -->
+        <div class="settings-pane" id="opticsPane">
+            <div class="control-group">
+                <div class="control-label"><span>Zoomaus</span><span class="control-val" id="zoomVal">1.0x</span></div>
+                <input type="range" id="zoom" min="0.5" max="3.5" step="0.01" value="1.0">
+            </div>
+            <div class="control-group">
+                <div class="control-label"><span>Kierrä</span><span class="control-val" id="rotVal">0°</span></div>
+                <input type="range" id="rotation" min="-180" max="180" value="0">
+            </div>
+            <div class="divider"></div>
+            <div class="control-group">
+                <div class="control-label"><span>Varjot</span><span class="control-val" id="shadVal">0</span></div>
+                <input type="range" id="shadows" min="-100" max="100" value="0">
+            </div>
+            <div class="control-group">
+                <div class="control-label"><span>Korostukset</span><span class="control-val" id="highVal">0</span></div>
+                <input type="range" id="highlights" min="-100" max="100" value="0">
+            </div>
+        </div>
+
+        <!-- CHEMICALS TAB: Exposure, Saturation, Contrast, Tint -->
+        <div class="settings-pane hidden" id="colorPane">
+            <div class="control-group">
+                <div class="control-label"><span>Valotus</span><span class="control-val" id="expVal">0</span></div>
+                <input type="range" id="exposure" min="-100" max="100" value="0">
+            </div>
+            <div class="control-group">
+                <div class="control-label"><span>Kontrasti</span><span class="control-val" id="conVal">0</span></div>
+                <input type="range" id="contrast" min="-100" max="100" value="0">
+            </div>
+            <div class="control-group">
+                <div class="control-label"><span>Saturaatio</span><span class="control-val" id="satVal">0</span></div>
+                <input type="range" id="saturation" min="-100" max="100" value="0">
+            </div>
+             <div class="control-group">
+                <div class="control-label"><span>Vibrance</span><span class="control-val" id="vibVal">0</span></div>
+                <input type="range" id="vibrance" min="-100" max="100" value="0">
+            </div>
+
+            <div class="mb-4">
+                <div class="control-label mb-3"><span>Mustavalko-käsittely</span></div>
+                <div class="flex gap-2">
+                    <button class="filter-btn active" data-mode="none" onclick="setMode('none', this)">Ei mitään</button>
+                    <button class="filter-btn" data-mode="neutral" onclick="setMode('neutral', this)">Klassinen</button>
+                    <button class="filter-btn" data-mode="yellow" onclick="setMode('yellow', this)">Keltainen</button>
+                    <button class="filter-btn" data-mode="red" onclick="setMode('red', this)">Punainen</button>
+                    <button class="filter-btn" data-mode="sepia" onclick="setMode('sepia', this)">Seepia</button>
+                </div>
+            </div>
+
+            <div id="bwMixControl" class="control-group opacity-50 transition-opacity">
+                <div class="control-label"><span>Suodattimen voimakkuus</span><span class="control-val" id="mixVal">0%</span></div>
+                <input type="range" id="bwMix" min="0" max="100" value="0">
+            </div>
+
+            <div id="colorTintSection">
+                <div class="control-label"><span>Värisävy (RGB)</span></div>
+                <div class="flex flex-col gap-1 mt-2">
+                    <input type="range" id="redChan" min="-50" max="50" value="0" class="!my-2">
+                    <input type="range" id="greenChan" min="-50" max="50" value="0" class="!my-2">
+                    <input type="range" id="blueChan" min="-50" max="50" value="0" class="!my-2">
+                </div>
+            </div>
+        </div>
+
+        <!-- FINALIZE TAB: Grain, Gloss, Text -->
+        <div class="settings-pane hidden" id="finishPane">
+            <div class="control-group">
+                <div class="control-label"><span>Filmikohina</span><span class="control-val" id="grainVal">30</span></div>
+                <input type="range" id="grain" min="0" max="250" value="30">
+            </div>
+            <div class="control-group">
+                <div class="control-label"><span>Kiilto/Heijastus</span><span class="control-val" id="glossVal">0</span></div>
+                <input type="range" id="gloss" min="0" max="150" value="0">
+            </div>
+            <input type="text" id="markerText" placeholder="Kirjoita kuvaan..." 
+                class="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 mb-4 text-white marker-font outline-none text-lg text-center">
+            <div class="control-group">
+                <div class="control-label"><span>Tekstin koko</span><span class="control-val" id="textSizeVal">1.0x</span></div>
+                <input type="range" id="textSize" min="0.5" max="6" step="0.1" value="1.0">
+            </div>
+        </div>
+
+        <div class="px-6 py-4 flex gap-4 mt-auto border-t border-white/5">
+            <label class="flex-1">
+                <div class="w-full h-full flex items-center justify-center bg-white/5 border border-white/10 rounded-2xl font-bold text-[11px] uppercase tracking-[0.2em] active:bg-white/10">Lataa</div>
+                <input type="file" id="imgInputAlt" accept="image/*" class="hidden">
+            </label>
+            <button id="exportBtn" class="btn-main flex-[2.5] active:scale-[0.98] transition-transform">Kehitä kuva</button>
         </div>
     </div>
 
-    <div class="controls" id="controlPanel">
-        <div class="tab-bar">
-            <button class="tab-btn active" onclick="switchTab('format', this)">Format</button>
-            <button class="tab-btn" onclick="switchTab('optics', this)">Optics</button>
-            <button class="tab-btn" onclick="switchTab('presets', this)">Presets</button>
-            <button class="tab-btn" onclick="switchTab('chem', this)">Film</button>
-            <button class="tab-btn" onclick="switchTab('style', this)">Text</button>
-        </div>
-
-        <div class="settings-pane" id="formatPane">
-            <div class="preset-grid">
-                <button class="preset-btn active" onclick="setFormat('p600', this)"><span>600</span></button>
-                <button class="preset-btn" onclick="setFormat('sx70', this)"><span>SX-70</span></button>
-                <button class="preset-btn" onclick="setFormat('spectra', this)"><span>Spectra</span></button>
-                <button class="preset-btn" onclick="setFormat('go', this)"><span>Go</span></button>
-                <button class="preset-btn" onclick="setFormat('i-type', this)"><span>i-Type</span></button>
-                <button class="preset-btn" onclick="setFormat('peel', this)"><span>Pack</span></button>
-                <button class="preset-btn" onclick="setFormat('neg35', this)"><span>35mm Neg</span></button>
-                <button class="preset-btn" onclick="setFormat('none', this)"><span>Raw</span></button>
-            </div>
-        </div>
-
-        <div class="settings-pane hidden" id="opticsPane">
-            <div class="control-group">
-                <div class="control-label"><span>Zoom</span><span class="control-val" id="zoomVal">1.0x</span></div>
-                <input type="range" id="zoom" min="0.5" max="4.0" step="0.01" value="1.0">
-            </div>
-            <div class="control-group">
-                <div class="control-label"><span>Rotation</span><span class="control-val" id="rotVal">0°</span></div>
-                <input type="range" id="rotation" min="-180" max="180" value="0">
-            </div>
-        </div>
-
-        <div class="settings-pane hidden" id="presetsPane">
-            <div class="preset-grid">
-                <button class="preset-btn active" onclick="setPreset('none', this)"><span>None</span></button>
-                <button class="preset-btn" onclick="setPreset('bw', this)"><span>B&W</span></button>
-                <button class="preset-btn" onclick="setPreset('p68', this)"><span>600s</span></button>
-                <button class="preset-btn" onclick="setPreset('vintage', this)"><span>Retro</span></button>
-                <button class="preset-btn" onclick="setPreset('sunset', this)"><span>Golden</span></button>
-                <button class="preset-btn" onclick="setPreset('cool', this)"><span>Opal</span></button>
-                <button class="preset-btn" onclick="setPreset('sepia', this)"><span>Dust</span></button>
-                <button class="preset-btn" onclick="setPreset('vivid', this)"><span>High</span></button>
-            </div>
-        </div>
-
-        <div class="settings-pane hidden" id="chemPane">
-            <div class="control-group">
-                <div class="control-label"><span>Exposure</span><span class="control-val" id="expVal">100%</span></div>
-                <input type="range" id="exposure" min="50" max="150" value="100">
-            </div>
-            <div class="control-group">
-                <div class="control-label"><span>Grain Strength</span><span class="control-val" id="grainVal">30</span></div>
-                <input type="range" id="grain" min="0" max="200" value="30">
-            </div>
-        </div>
-
-        <div class="settings-pane hidden" id="stylePane">
-            <input type="text" id="markerText" placeholder="Write on border..." 
-                class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 mb-4 text-white marker-font outline-none text-xl text-center">
-            <div class="grid grid-cols-2 gap-4">
-                <div class="control-group">
-                    <div class="control-label"><span>Gloss</span><span class="control-val" id="glossVal">0</span></div>
-                    <input type="range" id="gloss" min="0" max="100" value="0">
-                </div>
-                <div class="control-group">
-                    <div class="control-label"><span>Vignette</span><span class="control-val" id="vignetteVal">0</span></div>
-                    <input type="range" id="vignette" min="0" max="100" value="0">
-                </div>
-            </div>
-        </div>
-
-        <div class="action-bar">
-            <button id="exportBtn" class="btn-main active:scale-95">Develop Photo</button>
-        </div>
+    <div id="previewOverlay" onclick="hidePreview()">
+        <p class="text-white/40 text-[10px] font-bold uppercase tracking-[0.3em] mb-4">Sulje napauttamalla • Tallenna painamalla pitkään</p>
+        <img id="previewImg" src="" alt="Polaroid Esikatselu">
+        <button class="mt-8 px-10 py-4 bg-white/5 rounded-full text-[11px] font-bold uppercase tracking-widest border border-white/10">Takaisin studioon</button>
     </div>
 
 <script>
     const canvas = document.getElementById('mainCanvas');
     const ctx = canvas.getContext('2d', { alpha: false });
-    
-    // Format Definitions
-    const FORMATS = {
-        'p600': { w: 3100, h: 3800, margin: 160, footer: 650, borderRadius: 0 },
-        'sx70': { w: 3100, h: 3800, margin: 160, footer: 650, bg: '#fdfdf9' },
-        'spectra': { w: 4000, h: 3500, margin: 200, footer: 600 },
-        'go': { w: 2400, h: 3000, margin: 120, footer: 500 },
-        'i-type': { w: 3100, h: 3800, margin: 160, footer: 650 },
-        'peel': { w: 4200, h: 3200, margin: 300, footer: 300, bleed: true },
-        'neg35': { w: 3600, h: 2400, margin: 400, footer: 0, isNegative: true },
-        'none': { w: 2400, h: 2400, margin: 0, footer: 0 }
-    };
-
-    let state = { 
-        img: null, x: 0, y: 0, lastX: 0, lastY: 0, 
-        isDragging: false, currentPreset: 'none', currentFormat: 'p600' 
-    };
-
-    const ui = {};
-    const controls = ['zoom', 'rotation', 'exposure', 'grain', 'gloss', 'vignette', 'markerText'];
-    
-    controls.forEach(id => {
-        ui[id] = document.getElementById(id);
-        ui[id].oninput = () => { updateLabels(); draw(false); };
-    });
+    const BASE_S = 2400, MARGIN = 160, FOOTER = 640;
+    const TOTAL_W = BASE_S + (MARGIN * 2), TOTAL_H = BASE_S + MARGIN + FOOTER;
 
     const buffer = document.createElement('canvas');
     const bCtx = buffer.getContext('2d');
+    
+    // Filmikohina
     const noiseBuffer = document.createElement('canvas');
     const nCtx = noiseBuffer.getContext('2d');
-
     function updateNoise() {
         noiseBuffer.width = 512; noiseBuffer.height = 512;
         const idata = nCtx.createImageData(512, 512);
@@ -282,13 +327,54 @@
     }
     updateNoise();
 
+    let state = { img: null, x: 0, y: 0, lastX: 0, lastY: 0, isDragging: false, currentMode: 'none' };
+
+    const ui = {};
+    const controls = [
+        'zoom', 'rotation', 'exposure', 'contrast', 'saturation', 'vibrance', 
+        'shadows', 'highlights', 'bwMix', 'redChan', 'greenChan', 'blueChan', 
+        'grain', 'gloss', 'markerText', 'textSize'
+    ];
+    
+    controls.forEach(id => {
+        ui[id] = document.getElementById(id);
+        ui[id].oninput = () => { updateLabels(); draw(false); };
+    });
+
+    function setMode(mode, btn) {
+        state.currentMode = mode;
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        const mixCtrl = document.getElementById('bwMixControl');
+        if (mode === 'none') {
+            mixCtrl.classList.add('opacity-50');
+            ui.bwMix.value = 0;
+        } else {
+            mixCtrl.classList.remove('opacity-50');
+            if(ui.bwMix.value == 0) ui.bwMix.value = 100;
+        }
+        
+        updateLabels();
+        draw(false);
+    }
+
     function updateLabels() {
         document.getElementById('zoomVal').innerText = parseFloat(ui.zoom.value).toFixed(1) + 'x';
         document.getElementById('rotVal').innerText = ui.rotation.value + '°';
-        document.getElementById('expVal').innerText = ui.exposure.value + '%';
+        document.getElementById('expVal').innerText = (ui.exposure.value > 0 ? '+' : '') + ui.exposure.value;
+        document.getElementById('conVal').innerText = (ui.contrast.value > 0 ? '+' : '') + ui.contrast.value;
+        document.getElementById('satVal').innerText = (ui.saturation.value > 0 ? '+' : '') + ui.saturation.value;
+        document.getElementById('vibVal').innerText = (ui.vibrance.value > 0 ? '+' : '') + ui.vibrance.value;
+        document.getElementById('shadVal').innerText = (ui.shadows.value > 0 ? '+' : '') + ui.shadows.value;
+        document.getElementById('highVal').innerText = (ui.highlights.value > 0 ? '+' : '') + ui.highlights.value;
+        document.getElementById('mixVal').innerText = ui.bwMix.value + '%';
         document.getElementById('grainVal').innerText = ui.grain.value;
-        document.getElementById('vignetteVal').innerText = ui.vignette.value;
         document.getElementById('glossVal').innerText = ui.gloss.value;
+        document.getElementById('textSizeVal').innerText = parseFloat(ui.textSize.value).toFixed(1) + 'x';
+
+        const bw = parseInt(ui.bwMix.value);
+        document.getElementById('colorTintSection').style.opacity = (100 - (bw * 0.7)) / 100;
     }
 
     function switchTab(tabId, btn) {
@@ -298,21 +384,7 @@
         btn.classList.add('active');
     }
 
-    function setPreset(pId, btn) {
-        state.currentPreset = pId;
-        document.querySelectorAll('#presetsPane .preset-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        draw(false);
-    }
-
-    function setFormat(fId, btn) {
-        state.currentFormat = fId;
-        document.querySelectorAll('#formatPane .preset-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        draw(false);
-    }
-
-    document.getElementById('imgInput').onchange = (e) => {
+    const handleImageLoad = (e) => {
         const file = e.target.files[0];
         if(!file) return;
         const reader = new FileReader();
@@ -323,6 +395,7 @@
                 state.x = 0; state.y = 0;
                 document.getElementById('emptyState').classList.add('hidden');
                 document.getElementById('mainCanvas').classList.remove('hidden');
+                document.getElementById('inspectBtn').classList.remove('hidden');
                 draw(true);
             };
             img.src = v.target.result;
@@ -330,114 +403,136 @@
         reader.readAsDataURL(file);
     };
 
+    document.getElementById('imgInput').onchange = handleImageLoad;
+    document.getElementById('imgInputAlt').onchange = handleImageLoad;
+
     function applyFilmEngine(context, w, h) {
-        const exp = parseFloat(ui.exposure.value) / 100;
+        // Arvot -100:sta 100:aan skaalattuna
+        const exp = 1 + (parseInt(ui.exposure.value) / 100);
+        const con = 1 + (parseInt(ui.contrast.value) / 100);
+        const sat = 1 + (parseInt(ui.saturation.value) / 100);
+        const vib = parseInt(ui.vibrance.value) / 100;
+        const shad = parseInt(ui.shadows.value) / 100;
+        const high = parseInt(ui.highlights.value) / 100;
+        
+        const mix = parseInt(ui.bwMix.value) / 100;
+        const mode = state.currentMode;
+        
+        const rT = parseInt(ui.redChan.value);
+        const gT = parseInt(ui.greenChan.value);
+        const bT = parseInt(ui.blueChan.value);
+
         const idata = context.getImageData(0, 0, w, h);
         const d = idata.data;
-        const preset = state.currentPreset;
         
         for (let i = 0; i < d.length; i += 4) {
-            let r = d[i], g = d[i+1], b = d[i+2];
+            let r = (d[i] + rT);
+            let g = (d[i+1] + gT);
+            let b = (d[i+2] + bT);
 
-            if(preset === 'bw') {
-                const gray = (r * 0.299 + g * 0.587 + b * 0.114);
-                r = g = b = Math.max(0, Math.min(255, (gray - 128) * 1.3 + 128));
-            } else if (preset === 'p68') {
-                r = r * 1.1 + 10; g = g * 0.95; b = b * 0.8;
-            } else if (preset === 'vintage') {
-                r = r * 0.9 + 40; g = g * 0.8 + 20; b = b * 0.7 + 10;
-            } else if (preset === 'sunset') {
-                r = r * 1.3 + 20; g = g * 0.9; b = b * 0.6;
-            } else if (preset === 'cool') {
-                r = r * 0.8; g = g * 1.1; b = b * 1.5 + 10;
-            } else if (preset === 'vivid') {
-                r = (r - 128) * 1.4 + 128; g = (g - 128) * 1.4 + 128; b = (b - 128) * 1.4 + 128;
+            // 1. Valotus
+            r *= exp; g *= exp; b *= exp;
+
+            // 2. Korostukset ja varjot
+            const luminance = (r * 0.299 + g * 0.587 + b * 0.114) / 255;
+            
+            // Varjojen säätö
+            if (shad !== 0) {
+                const shadowFactor = Math.pow(1 - luminance, 3) * shad * 100;
+                r += shadowFactor; g += shadowFactor; b += shadowFactor;
+            }
+            
+            // Korostusten säätö
+            if (high !== 0) {
+                const highFactor = Math.pow(luminance, 3) * high * 100;
+                r += highFactor; g += highFactor; b += highFactor;
             }
 
-            d[i] = Math.max(0, Math.min(255, r * exp));
-            d[i+1] = Math.max(0, Math.min(255, g * exp));
-            d[i+2] = Math.max(0, Math.min(255, b * exp));
+            // 3. Kontrasti
+            r = (r - 128) * con + 128;
+            g = (g - 128) * con + 128;
+            b = (b - 128) * con + 128;
+
+            // 4. Saturaatio ja Vibrance
+            const gray = r * 0.299 + g * 0.587 + b * 0.114;
+            
+            // Perussaturaatio
+            r = gray + (r - gray) * sat;
+            g = gray + (g - gray) * sat;
+            b = gray + (b - gray) * sat;
+            
+            // Älykäs saturaatio (Vibrance)
+            if (vib !== 0) {
+                const max = Math.max(r, g, b);
+                const avg = (r + g + b) / 3;
+                const amt = (Math.abs(max - avg) / 255) * vib;
+                const vFactor = (1 - amt) * vib * 1.5;
+                r += (r - gray) * vFactor;
+                g += (g - gray) * vFactor;
+                b += (b - gray) * vFactor;
+            }
+
+            // 5. MV-suodattimet
+            if (mode !== 'none' && mix > 0) {
+                let filteredGray;
+                switch(mode) {
+                    case 'yellow': filteredGray = (r * 0.5 + g * 0.45 + b * 0.05); break;
+                    case 'red':    filteredGray = (r * 0.9 + g * 0.08 + b * 0.02); break;
+                    case 'sepia':  filteredGray = (r * 0.3 + g * 0.59 + b * 0.11); break;
+                    default:       filteredGray = gray;
+                }
+
+                let targetR = filteredGray, targetG = filteredGray, targetB = filteredGray;
+                if (mode === 'sepia') {
+                    targetR = filteredGray + 38;
+                    targetG = filteredGray + 18;
+                    targetB = filteredGray - 12;
+                }
+                r = r * (1 - mix) + targetR * mix;
+                g = g * (1 - mix) + targetG * mix;
+                b = b * (1 - mix) + targetB * mix;
+            }
+
+            d[i] = Math.max(0, Math.min(255, r));
+            d[i+1] = Math.max(0, Math.min(255, g));
+            d[i+2] = Math.max(0, Math.min(255, b));
         }
         context.putImageData(idata, 0, 0);
     }
 
-    function drawNegDetails(s, w, h, m) {
-        ctx.fillStyle = "#111";
-        ctx.fillRect(0, 0, w, h);
-        
-        ctx.fillStyle = "#000";
-        // Sprocket Holes
-        const holeW = 120 * s, holeH = 180 * s;
-        for(let i=0; i<w; i += 300 * s) {
-            ctx.fillRect(i + 50*s, 50 * s, holeW, holeH);
-            ctx.fillRect(i + 50*s, h - holeH - 50*s, holeW, holeH);
-        }
-
-        // Text markings
-        ctx.font = `${80 * s}px 'JetBrains Mono'`;
-        ctx.fillStyle = "rgba(255, 120, 0, 0.6)"; // Amber kodak color
-        ctx.fillText("KODAK PORTRA 400", 400 * s, h - 280 * s);
-        ctx.fillText("24A", w - 600 * s, h - 280 * s);
-        ctx.fillText("▶ 25", w/2, 280 * s);
-    }
-
     function draw(highRes = false) {
         if(!state.img) return;
-        const fmt = FORMATS[state.currentFormat];
-        const containerW = document.getElementById('canvasContainer').clientWidth;
-        const containerH = document.getElementById('canvasContainer').clientHeight;
-
-        const scaleX = containerW / fmt.w;
-        const scaleY = containerH / fmt.h;
-        const s = highRes ? 1 : Math.min(scaleX, scaleY);
+        const s = highRes ? 1 : (Math.min(window.innerWidth * 2, 800) / TOTAL_W);
+        canvas.width = TOTAL_W * s; canvas.height = TOTAL_H * s;
         
-        canvas.width = fmt.w * s;
-        canvas.height = fmt.h * s;
+        ctx.fillStyle = "#ffffff"; 
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        const m = fmt.margin * s;
-        const footerH = fmt.footer * s;
-        const photoW = canvas.width - (m * 2);
-        const photoH = canvas.height - (m * 2) - footerH;
+        ctx.save();
+        ctx.fillStyle = "rgba(0,0,0,0.06)";
+        ctx.font = `800 ${46 * s}px 'Plus Jakarta Sans'`;
+        ctx.textAlign = "right";
+        ctx.fillText("600", canvas.width - (MARGIN * s), canvas.height - (70 * s));
+        ctx.restore();
 
-        // Background
-        if(fmt.isNegative) {
-            drawNegDetails(s, canvas.width, canvas.height, m);
-        } else {
-            ctx.fillStyle = fmt.bg || "#ffffff";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-        }
-
-        // Buffer Drawing
-        buffer.width = photoW / s;
-        buffer.height = photoH / s;
-        const bW = buffer.width, bH = buffer.height;
-        
-        const z = parseFloat(ui.zoom.value);
+        const m = MARGIN * s, b = BASE_S * s, z = parseFloat(ui.zoom.value);
         const r = parseInt(ui.rotation.value) * Math.PI / 180;
         const aspect = state.img.width / state.img.height;
-        const pAspect = bW / bH;
+        let dw = aspect > 1 ? (b * z * aspect) : (b * z), dh = aspect > 1 ? (b * z) : (b * z / aspect);
 
-        let dw, dh;
-        if (aspect > pAspect) {
-            dh = bH * z; dw = dh * aspect;
-        } else {
-            dw = bW * z; dh = dw / aspect;
-        }
-
-        bCtx.fillStyle = "#111";
-        bCtx.fillRect(0, 0, bW, bH);
+        buffer.width = b; buffer.height = b;
+        bCtx.fillStyle = "#000"; bCtx.fillRect(0, 0, b, b);
         bCtx.save();
-        bCtx.translate(bW/2 + state.x * s, bH/2 + state.y * s);
+        bCtx.translate(b/2 + state.x * s, b/2 + state.y * s);
         bCtx.rotate(r);
         bCtx.drawImage(state.img, -dw/2, -dh/2, dw, dh);
         bCtx.restore();
-        applyFilmEngine(bCtx, bW, bH);
+        applyFilmEngine(bCtx, b, b);
 
-        // Render Photo to Main
         ctx.save();
-        ctx.drawImage(buffer, m, m, photoW, photoH);
+        ctx.beginPath(); ctx.rect(m, m, b, b); ctx.clip();
+        ctx.drawImage(buffer, m, m);
 
-        // Overlays
         const gVal = parseInt(ui.grain.value);
         if(gVal > 0) {
             ctx.save();
@@ -445,83 +540,103 @@
             ctx.globalAlpha = gVal / 255;
             const ptrn = ctx.createPattern(noiseBuffer, 'repeat');
             ctx.fillStyle = ptrn;
-            ctx.translate(m, m);
-            ctx.fillRect(0, 0, photoW, photoH);
+            ctx.fillRect(m, m, b, b);
             ctx.restore();
-        }
-
-        const vVal = parseInt(ui.vignette.value);
-        if(vVal > 0) {
-            const grad = ctx.createRadialGradient(m+photoW/2, m+photoH/2, photoW*0.3, m+photoW/2, m+photoH/2, photoW*0.8);
-            grad.addColorStop(0, 'rgba(0,0,0,0)');
-            grad.addColorStop(1, `rgba(0,0,0,${vVal/100 * 0.8})`);
-            ctx.fillStyle = grad;
-            ctx.fillRect(m, m, photoW, photoH);
         }
 
         const glossVal = parseInt(ui.gloss.value);
         if(glossVal > 0) {
             ctx.save();
-            const alpha = (glossVal / 100);
-            const grad = ctx.createLinearGradient(m, m, m+photoW, m+photoH);
-            grad.addColorStop(0, `rgba(255,255,255,${0.2 * alpha})`);
-            grad.addColorStop(0.5, `rgba(255,255,255,0)`);
-            grad.addColorStop(1, `rgba(255,255,255,${0.1 * alpha})`);
-            ctx.fillStyle = grad;
-            ctx.fillRect(m, m, photoW, photoH);
+            const alpha = (glossVal / 100) * 1.5;
+            const grad1 = ctx.createLinearGradient(m, m, m, m + b);
+            grad1.addColorStop(0, `rgba(255,255,255,${0.4 * alpha})`);
+            grad1.addColorStop(0.4, `rgba(255,255,255,${0.08 * alpha})`);
+            grad1.addColorStop(1, 'rgba(255,255,255,0)');
+            ctx.fillStyle = grad1;
+            ctx.fillRect(m, m, b, b);
+
+            const grad2 = ctx.createRadialGradient(m + b*0.1, m + b*0.1, 0, m + b*0.1, m + b*0.1, b*0.8);
+            grad2.addColorStop(0, `rgba(255,255,255,${0.7 * alpha})`);
+            grad2.addColorStop(0.3, `rgba(255,255,255,${0.15 * alpha})`);
+            grad2.addColorStop(0.8, 'rgba(255,255,255,0)');
+            ctx.fillStyle = grad2;
+            ctx.fillRect(m, m, b, b);
             ctx.restore();
         }
-        ctx.restore();
+        ctx.restore(); 
 
-        // Footer Text
-        if(ui.markerText.value && footerH > 0) {
-            ctx.font = `${140 * s}px 'Permanent Marker'`;
-            ctx.fillStyle = "rgba(10,10,25,0.85)";
+        if(ui.markerText.value) {
+            const sm = parseFloat(ui.textSize.value);
+            ctx.font = `${110 * s * sm}px 'Permanent Marker'`;
+            ctx.fillStyle = "rgba(10,10,35,0.85)";
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
             ctx.save();
-            const footerCenterY = (canvas.height - footerH) + (footerH / 2) + (30 * s);
+            const footerCenterY = (TOTAL_H * s - FOOTER * s) + (FOOTER * s / 2) + (30 * s);
             ctx.translate(canvas.width/2, footerCenterY);
-            ctx.rotate(-0.015);
+            ctx.rotate(-0.01);
             ctx.fillText(ui.markerText.value, 0, 0);
             ctx.restore();
         }
 
         if(!highRes) {
             clearTimeout(window.rTimer);
-            window.rTimer = setTimeout(() => draw(true), 300);
+            window.rTimer = setTimeout(() => draw(true), 400);
         }
     }
 
-    const container = document.getElementById('canvasContainer');
+    const v = document.getElementById('viewport');
     const handleMove = (e) => {
         if(!state.isDragging || !state.img) return;
         const t = e.touches ? e.touches[0] : e;
-        const fmt = FORMATS[state.currentFormat];
-        const f = fmt.w / canvas.clientWidth;
+        const f = TOTAL_W / canvas.clientWidth;
         state.x += (t.clientX - state.lastX) * f;
         state.y += (t.clientY - state.lastY) * f;
         state.lastX = t.clientX; state.lastY = t.clientY;
         draw(false);
     };
 
-    container.addEventListener('mousedown', (e) => { state.isDragging = true; state.lastX = e.clientX; state.lastY = e.clientY; });
-    container.addEventListener('touchstart', (e) => { state.isDragging = true; state.lastX = e.touches[0].clientX; state.lastY = e.touches[0].clientY; }, {passive: false});
+    v.addEventListener('mousedown', (e) => { state.isDragging = true; state.lastX = e.clientX; state.lastY = e.clientY; });
+    v.addEventListener('touchstart', (e) => { state.isDragging = true; state.lastX = e.touches[0].clientX; state.lastY = e.touches[0].clientY; }, {passive: false});
     window.addEventListener('mousemove', handleMove);
     window.addEventListener('touchmove', (e) => { if(state.isDragging) e.preventDefault(); handleMove(e); }, {passive: false});
     window.addEventListener('mouseup', () => state.isDragging = false);
     window.addEventListener('touchend', () => state.isDragging = false);
 
-    document.getElementById('exportBtn').onclick = function() {
+    function showPreview() {
         if(!state.img) return;
         draw(true);
-        const link = document.createElement('a');
-        link.href = canvas.toDataURL('image/jpeg', 0.98);
-        link.download = `studio_${state.currentFormat}_${Date.now()}.jpg`;
-        link.click();
-    };
+        const data = canvas.toDataURL('image/jpeg', 0.95);
+        document.getElementById('previewImg').src = data;
+        document.getElementById('previewOverlay').style.display = 'flex';
+    }
+    function hidePreview() { document.getElementById('previewOverlay').style.display = 'none'; }
 
-    window.onresize = () => draw(false);
+    document.getElementById('exportBtn').addEventListener('click', function() {
+        if(!state.img) return;
+        const btn = this;
+        btn.innerText = "KEHITETÄÄN...";
+        btn.disabled = true;
+        setTimeout(() => {
+            draw(true);
+            canvas.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `polaroid_studio_${Date.now()}.jpg`;
+                document.body.appendChild(link);
+                link.click();
+                showPreview(); 
+                setTimeout(() => {
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+                    btn.innerText = "Kehitä kuva";
+                    btn.disabled = false;
+                }, 100);
+            }, 'image/jpeg', 0.95);
+        }, 100);
+    });
+
     updateLabels();
 </script>
 </body>
